@@ -1,0 +1,443 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隔離觀察 - 機密檔案</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cyber-blue': '#00FFFF',
+                        'cyber-green': '#00FF00',
+                        'cyber-red': '#FF0040',
+                        'cyber-purple': '#8A2BE2',
+                        'cyber-orange': '#FF6600',
+                        'dark-bg': '#0A0A0A',
+                        'card-bg': '#1A1A2E'
+                    },
+                    fontFamily: {
+                        'cyber': ['Courier New', 'monospace']
+                    },
+                    fontSize: {
+                        '18': '18px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, #0A0A0A 0%, #1A1A2E 100%);
+            overflow-x: hidden;
+        }
+        
+        .cyber-glow {
+            box-shadow: 0 0 10px #00FFFF, 0 0 20px #00FFFF, 0 0 40px #00FFFF;
+        }
+        
+        .cyber-glow-red {
+            box-shadow: 0 0 10px #FF0040, 0 0 20px #FF0040, 0 0 40px #FF0040;
+        }
+        
+        .cyber-glow-green {
+            box-shadow: 0 0 10px #00FF00, 0 0 20px #00FF00, 0 0 40px #00FF00;
+        }
+        
+        .cyber-glow-orange {
+            box-shadow: 0 0 10px #FF6600, 0 0 20px #FF6600, 0 0 40px #FF6600;
+        }
+        
+        .glitch {
+            animation: glitch 2s infinite;
+        }
+        
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+        
+        .letter-block {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+        }
+        
+        .letter-block:hover {
+            transform: scale(1.05);
+        }
+        
+        .letter-block.locked {
+            cursor: not-allowed;
+            animation: pulse-locked 2s infinite;
+        }
+        
+        .letter-block.incorrect {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse-locked {
+            0%, 100% { 
+                box-shadow: 0 0 15px #00FF00, 0 0 30px #00FF00, 0 0 45px #00FF00;
+                border-color: #00FF00;
+            }
+            50% { 
+                box-shadow: 0 0 25px #00FF00, 0 0 50px #00FF00, 0 0 75px #00FF00;
+                border-color: #32FF32;
+            }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .target-slot {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .target-slot.filled {
+            background-color: rgba(0, 255, 0, 0.2);
+            border-color: #00FF00;
+        }
+        
+        .scanline {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .scanline::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.4), transparent);
+            animation: scan 3s infinite;
+        }
+        
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .success-animation {
+            animation: success-move 0.8s ease-out;
+        }
+        
+        @keyframes success-move {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #FF0040, #00FFFF, #00FF00);
+            transition: width 0.5s ease;
+        }
+        
+        .completion-flash {
+            animation: completion-flash 1.5s ease-out;
+        }
+        
+        @keyframes completion-flash {
+            0% { background-color: rgba(0, 255, 0, 0.8); }
+            50% { background-color: rgba(0, 255, 255, 0.6); }
+            100% { background-color: transparent; }
+        }
+        
+        .document-text {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        
+        .danger-text {
+            color: #FF6600;
+        }
+        
+        .critical-text {
+            color: #FF0040;
+        }
+        
+        .scholar-text {
+            color: #8A2BE2;
+        }
+    </style>
+<script src="https://puc.poecdn.net/authenticated_preview_page/syncedState.3f7572448765332f3047.js"></script></head>
+<body class="min-h-screen text-white">
+    <!-- Page 1: Letter Puzzle -->
+    <div id="page1" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-6xl font-bold text-cyber-blue mb-4 glitch">機密檔案</h1>
+            <h2 class="text-xl md:text-2xl text-cyber-green mb-8">CLASSIFIED FILE</h2>
+            <p class="text-base md:text-lg text-gray-300 mb-4">點擊字母解鎖檔案</p>
+            <p class="text-sm md:text-base text-cyber-blue cyber-glow">CLICK LETTERS TO UNLOCK</p>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="w-full max-w-md mb-8">
+            <div class="flex justify-between text-xs text-gray-400 mb-2">
+                <span>進度 PROGRESS</span>
+                <span id="progressText">0/10</span>
+            </div>
+            <div class="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
+                <div id="progressBar" class="h-full progress-bar rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <!-- Source Letters -->
+        <div class="mb-8">
+            <p class="text-center text-cyber-green mb-4">可用字母 AVAILABLE LETTERS</p>
+            <div id="sourceArea" class="flex flex-wrap gap-2 justify-center min-h-[80px] p-4 border-2 border-cyber-blue/30 rounded-lg bg-card-bg/50">
+                <!-- Letters will be dynamically added here -->
+            </div>
+        </div>
+        
+        <!-- Target Area -->
+        <div class="mb-8">
+            <p class="text-center text-cyber-red mb-4">目標排列 TARGET SEQUENCE</p>
+            <div id="targetArea" class="flex flex-wrap gap-2 justify-center min-h-[80px] p-4 border-2 border-cyber-red/30 rounded-lg bg-card-bg/50">
+                <!-- Target slots will be dynamically added here -->
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <p class="text-sm text-gray-400 mb-4">找出正確的字母順序</p>
+            <button id="resetBtn" class="px-6 py-2 bg-cyber-red/20 border border-cyber-red text-cyber-red rounded hover:bg-cyber-red/30 transition-all">
+                重置 RESET
+            </button>
+        </div>
+    </div>
+    
+    <!-- Page 2: Document Content -->
+    <div id="page2" class="min-h-screen p-4 hidden">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-5xl font-bold text-cyber-red mb-4 cyber-glow-red">隔離觀察</h1>
+                <h2 class="text-lg md:text-xl text-cyber-blue">ISOLATION OBSERVATION</h2>
+                <div class="w-full h-px bg-gradient-to-r from-transparent via-cyber-blue to-transparent mt-4"></div>
+            </div>
+            
+            <div id="documentContent" class="space-y-8">
+                <!-- Document content will be dynamically added here -->
+            </div>
+            
+            <div class="text-center mt-12">
+                <button id="backBtn" class="px-6 py-3 bg-cyber-blue/20 border border-cyber-blue text-cyber-blue rounded hover:bg-cyber-blue/30 transition-all">
+                    返回解謎 BACK TO PUZZLE
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Game state
+        const sourceLetters = ['A', 'H', 'T', 'L', 'I', 'E', 'Y', '=', 'E', 'N'];
+        const targetSequence = ['T', 'H', 'E', 'Y', '=', 'A', 'L', 'I', 'E', 'N'];
+        let currentPosition = 0;
+        let placedLetters = [];
+        let usedSourceIndexes = new Set();
+
+        // Updated document content
+        const documentData = [
+            {
+                day: "隔離觀察第1日",
+                content: "「最近一批甦醒者有十多人出現嘔心暈眩、不定期意識不清，情緒躁動不安，他們願意接受隔離觀察，我相信我們會找到成因與醫治方法。」",
+                colorClass: "text-gray-300"
+            },
+            {
+                day: "隔離觀察第32日",
+                content: "「又有病患被送來了，病患長相變得奇怪，皮膚生出硬皮，肌肉群增幅發達，使他們力氣變大、跳躍力增強。連可愛的孩子也出現顱骨變異，居然對我們充滿敵意，像老虎遇上獵物時的神情......\n但......我是拯救人的醫生，不能再讓病患情況惡化下去了。\n\n我發現我們這批早期甦醒者，與他們一樣被人在左臂上注射過甚麼，是巧合嗎?」",
+                colorClass: "danger-text"
+            },
+            {
+                day: "隔離觀察第79日",
+                content: "「上層雖沒有明言，但我們前線醫護清楚，那班傢伙早不是人類了，舌頭分裂成小型捕食口器，上下顎分離。我的同伴們大多已自願走進隔離室，如果我也倒下了......不，我要整理留下來的病歷，一定對後人有幫助的......\n\n但......似乎已經太遲了，痕癢和飢餓正逐步侵蝕我......啊......身體好像從裡面撕裂......我知道是......造成的，但已來不及......好痛苦......救救我......我不想變成......異......類」",
+                colorClass: "critical-text"
+            },
+            {
+                day: "隔離觀察第100日",
+                content: "學者觀察：這批異形進入成蟲階段，普遍出現語言及視覺能力退化、極具攻擊性、能聽到一百米內的腳步聲、抗拒高頻聲音、害怕高溫的狀況",
+                colorClass: "scholar-text"
+            }
+        ];
+
+        // Initialize the game
+        function initGame() {
+            createSourceLetters();
+            createTargetSlots();
+            setupEventListeners();
+            updateProgress();
+        }
+
+        function createSourceLetters() {
+            const sourceArea = document.getElementById('sourceArea');
+            sourceArea.innerHTML = '';
+            
+            sourceLetters.forEach((letter, index) => {
+                const letterDiv = document.createElement('div');
+                letterDiv.className = 'letter-block w-12 h-12 md:w-16 md:h-16 bg-cyber-blue/20 border-2 border-cyber-blue rounded flex items-center justify-center text-lg md:text-xl font-bold text-cyber-blue transition-all';
+                letterDiv.textContent = letter;
+                letterDiv.dataset.letter = letter;
+                letterDiv.dataset.index = index;
+                letterDiv.addEventListener('click', () => handleLetterClick(letter, index, letterDiv));
+                sourceArea.appendChild(letterDiv);
+            });
+        }
+
+        function createTargetSlots() {
+            const targetArea = document.getElementById('targetArea');
+            targetArea.innerHTML = '';
+            
+            for (let i = 0; i < 10; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'target-slot w-12 h-12 md:w-16 md:h-16 border-2 border-dashed border-cyber-red/50 rounded flex items-center justify-center text-lg md:text-xl font-bold bg-cyber-red/10';
+                slot.dataset.position = i;
+                targetArea.appendChild(slot);
+            }
+        }
+
+        function handleLetterClick(letter, sourceIndex, letterElement) {
+            if (usedSourceIndexes.has(sourceIndex)) {
+                return;
+            }
+            
+            const expectedLetter = targetSequence[currentPosition];
+            
+            if (letter === expectedLetter) {
+                moveLetterToTarget(letter, sourceIndex, letterElement);
+            } else {
+                showIncorrectFeedback(letterElement);
+            }
+        }
+
+        function moveLetterToTarget(letter, sourceIndex, letterElement) {
+            const targetSlots = document.querySelectorAll('.target-slot');
+            const targetSlot = targetSlots[currentPosition];
+            
+            const targetLetter = document.createElement('div');
+            targetLetter.className = 'letter-block locked w-12 h-12 md:w-16 md:h-16 bg-cyber-green/30 border-2 border-cyber-green rounded flex items-center justify-center text-lg md:text-xl font-bold text-cyber-green success-animation';
+            targetLetter.textContent = letter;
+            
+            targetSlot.innerHTML = '';
+            targetSlot.appendChild(targetLetter);
+            targetSlot.classList.add('filled');
+            
+            letterElement.classList.add('locked');
+            letterElement.style.opacity = '0.3';
+            letterElement.style.pointerEvents = 'none';
+            usedSourceIndexes.add(sourceIndex);
+            
+            placedLetters[currentPosition] = letter;
+            currentPosition++;
+            
+            updateProgress();
+            checkWin();
+        }
+
+        function showIncorrectFeedback(letterElement) {
+            letterElement.classList.add('incorrect');
+            setTimeout(() => {
+                letterElement.classList.remove('incorrect');
+            }, 500);
+        }
+
+        function updateProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const percentage = (currentPosition / 10) * 100;
+            progressBar.style.width = percentage + '%';
+            progressText.textContent = `${currentPosition}/10`;
+        }
+
+        function checkWin() {
+            if (currentPosition === 10) {
+                document.getElementById('targetArea').classList.add('completion-flash');
+                
+                setTimeout(() => {
+                    showPage2();
+                }, 2000);
+            }
+        }
+
+        function resetGame() {
+            currentPosition = 0;
+            placedLetters = [];
+            usedSourceIndexes.clear();
+            
+            document.querySelectorAll('.target-slot').forEach(slot => {
+                slot.classList.remove('filled');
+            });
+            
+            document.getElementById('targetArea').classList.remove('completion-flash');
+            
+            createSourceLetters();
+            createTargetSlots();
+            updateProgress();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+            
+            document.getElementById('backBtn').addEventListener('click', () => {
+                document.getElementById('page2').classList.add('hidden');
+                document.getElementById('page1').classList.remove('hidden');
+            });
+        }
+
+        function showPage2() {
+            document.getElementById('page1').classList.add('hidden');
+            document.getElementById('page2').classList.remove('hidden');
+            displayDocument();
+        }
+
+        function displayDocument() {
+            const contentArea = document.getElementById('documentContent');
+            contentArea.innerHTML = '';
+            
+            documentData.forEach((entry, index) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'scanline bg-card-bg/50 p-6 rounded-lg border border-cyber-red/30 mb-6';
+                
+                const dayHeader = document.createElement('h3');
+                dayHeader.className = 'text-xl md:text-2xl font-bold text-cyber-red mb-4 cyber-glow-red';
+                dayHeader.textContent = entry.day;
+                
+                const content = document.createElement('p');
+                content.className = `document-text ${entry.colorClass} leading-relaxed`;
+                content.style.whiteSpace = 'pre-line'; // 保持換行格式
+                content.textContent = entry.content;
+                
+                entryDiv.appendChild(dayHeader);
+                entryDiv.appendChild(content);
+                contentArea.appendChild(entryDiv);
+            });
+        }
+
+        // Initialize the app
+        initGame();
+    </script>
+
+
+</body></html>
